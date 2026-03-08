@@ -84,6 +84,29 @@ app.get('/api/productos/:id', (req, res) => {
 
 });
 
+app.post('/api/productos',(req,res)=>{
+    const producto = req.body;
+    if(!producto.Nombre || !producto.Descripcion || !producto.CodigoSKU
+        || !producto.Precio_Compra || !producto.Precio_Venta || !producto.Stock_Minimo || !producto.Estado || !producto.CategoriaId ||!['ACTIVO', 'INACTIVO'].includes(producto.Estado)){
+         return res.status(400).json({status:400,message:'Todos los campos son obligatorios...'});
+    }
+    
+    const sql = 'INSERT INTO Productos (Nombre,Descripcion,CodigoSKU, Precio_Compra,Precio_Venta,Stock_Minimo,Estado,CategoriaId) VALUES(?,?,?,?,?,?,?,?)';
+
+        pool.query(sql,[producto.Nombre ,producto.Descripcion ,producto.CodigoSKU,producto.Precio_Compra ,producto.Precio_Venta ,producto.Stock_Minimo ,producto.Estado,producto.CategoriaId],(error,results)=>{
+            if (error) {
+                console.log('Existe un error en la consulta SQL');
+                res.status(500).json({ status: 500, message: 'Error en la consulta SQL' });
+            } else {
+                producto.id = results.insertId;
+                res.status(200).json({ status: 200, message: 'Success', data: producto });
+            }
+    });
+
+});
+
+
+
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });

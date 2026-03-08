@@ -84,6 +84,104 @@ app.get('/api/productos/:id', (req, res) => {
 
 });
 
+app.post('/api/productos',(req,res)=>{
+    const producto = req.body;
+    if(!producto.Nombre || !producto.Descripcion || !producto.CodigoSKU
+        || !producto.Precio_Compra || !producto.Precio_Venta || !producto.Stock_Minimo || !producto.Estado || !producto.CategoriaId ||!['ACTIVO', 'INACTIVO'].includes(producto.Estado)){
+         return res.status(400).json({status:400,message:'Todos los campos son obligatorios...'});
+    }
+    
+    const sql = 'INSERT INTO Productos (Nombre,Descripcion,CodigoSKU, Precio_Compra,Precio_Venta,Stock_Minimo,Estado,CategoriaId) VALUES(?,?,?,?,?,?,?,?)';
+
+        pool.query(sql,[producto.Nombre ,producto.Descripcion ,producto.CodigoSKU,producto.Precio_Compra ,producto.Precio_Venta ,producto.Stock_Minimo ,producto.Estado,producto.CategoriaId],(error,results)=>{
+            if (error) {
+                console.log('Existe un error en la consulta SQL');
+                res.status(500).json({ status: 500, message: 'Error en la consulta SQL' });
+            } else {
+                producto.id = results.insertId;
+                res.status(200).json({ status: 200, message: 'Success', data: producto });
+            }
+    });
+
+});
+
+app.put("/api/productos/:id", (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  const {
+    Nombre,
+    CodigoSKU,
+    Precio_Compra,
+    Precio_Venta,
+    Estado,
+    CategoriaId,
+    ProveedorId,
+  } = req.body;
+
+  // Validación básica de campos obligatorios
+  if (!Nombre || !CodigoSKU || !Precio_Compra || !Precio_Venta || !Estado) {
+    return res.status(400).json({
+      status: 400,
+      message: "Faltan campos obligatorios en el cuerpo de la solicitud",
+    });
+  }
+
+  const sql = `
+    UPDATE Productos
+    SET
+      Nombre = ?,
+      CodigoSKU = ?,
+      Precio_Compra = ?,
+      Precio_Venta = ?,
+      Estado = ?,
+      CategoriaId = ?,
+      ProveedorId = ?
+    WHERE Id = ?
+  `;
+
+  const params = [
+    Nombre,
+    CodigoSKU,
+    Precio_Compra,
+    Precio_Venta,
+    Estado,
+    CategoriaId || null,
+    ProveedorId || null,
+    id,
+  ];
+
+  pool.query(sql, params, (error, result) => {
+    if (error) {
+      console.log("Error en la consulta SQL", error);
+      return res
+        .status(500)
+        .json({ status: 500, message: "Error en la consulta SQL" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ status: 404, message: "Este producto no fue encontrado" });
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: "Producto actualizado correctamente",
+      data: {
+        Id: id,
+        Nombre,
+        CodigoSKU,
+        Precio_Compra,
+        Precio_Venta,
+        Estado,
+        CategoriaId,
+        ProveedorId,
+      },
+    });
+  });
+});
+
+
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });

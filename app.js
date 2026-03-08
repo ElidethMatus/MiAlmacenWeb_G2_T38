@@ -105,6 +105,23 @@ app.post('/api/productos',(req,res)=>{
 
 });
 
+app.delete('/api/productos/:id',(req,res)=>{
+    const Id = parseInt(req.params.id);
+    const sql = 'DELETE FROM Productos WHERE Id =?';
+
+    pool.query(sql,[Id],(error,results)=>{
+        if (error) {
+                console.log('Existe un error en la consulta SQL');
+                res.status(500).json({ status: 500, message: 'Error en la consulta SQL' });
+        } else if(results.affectedRows === 0 ){
+                res.status(404).json({status:404,message:'Fila no encontrado'});   
+        }else {
+                res.status(200).json({ status: 200, message:'Producto eliminado correctamente',});
+        }
+    });
+
+});
+
 
 
 app.listen(PORT, () => {

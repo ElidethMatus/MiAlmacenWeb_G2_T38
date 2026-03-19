@@ -105,80 +105,21 @@ app.post('/api/productos',(req,res)=>{
 
 });
 
-app.put("/api/productos/:id", (req, res) => {
-  const id = parseInt(req.params.id, 10);
+app.delete('/api/productos/:id',(req,res)=>{
+    const Id = parseInt(req.params.id);
+    const sql = 'DELETE FROM Productos WHERE Id =?';
 
-  const {
-    Nombre,
-    CodigoSKU,
-    Precio_Compra,
-    Precio_Venta,
-    Estado,
-    CategoriaId,
-    ProveedorId,
-  } = req.body;
-
-  // Validación básica de campos obligatorios
-  if (!Nombre || !CodigoSKU || !Precio_Compra || !Precio_Venta || !Estado) {
-    return res.status(400).json({
-      status: 400,
-      message: "Faltan campos obligatorios en el cuerpo de la solicitud",
+    pool.query(sql,[Id],(error,results)=>{
+        if (error) {
+                console.log('Existe un error en la consulta SQL');
+                res.status(500).json({ status: 500, message: 'Error en la consulta SQL' });
+        } else if(results.affectedRows === 0 ){
+                res.status(404).json({status:404,message:'Fila no encontrado'});   
+        }else {
+                res.status(200).json({ status: 200, message:'Producto eliminado correctamente',});
+        }
     });
-  }
 
-  const sql = `
-    UPDATE Productos
-    SET
-      Nombre = ?,
-      CodigoSKU = ?,
-      Precio_Compra = ?,
-      Precio_Venta = ?,
-      Estado = ?,
-      CategoriaId = ?,
-      ProveedorId = ?
-    WHERE Id = ?
-  `;
-
-  const params = [
-    Nombre,
-    CodigoSKU,
-    Precio_Compra,
-    Precio_Venta,
-    Estado,
-    CategoriaId || null,
-    ProveedorId || null,
-    id,
-  ];
-
-  pool.query(sql, params, (error, result) => {
-    if (error) {
-      console.log("Error en la consulta SQL", error);
-      return res
-        .status(500)
-        .json({ status: 500, message: "Error en la consulta SQL" });
-    }
-
-    if (result.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({ status: 404, message: "Este producto no fue encontrado" });
-    }
-
-    return res.status(200).json({
-      status: 200,
-      message: "Producto actualizado correctamente",
-      data: {
-        Id: id,
-        Nombre,
-        CodigoSKU,
-        Precio_Compra,
-        Precio_Venta,
-        Estado,
-        CategoriaId,
-        ProveedorId,
-      },
-    });
-  });
 });
 
 app.delete('/api/productos/:id',(req,res)=>{
@@ -197,6 +138,7 @@ app.delete('/api/productos/:id',(req,res)=>{
     });
 
 });
+
 
 
 app.listen(PORT, () => {
